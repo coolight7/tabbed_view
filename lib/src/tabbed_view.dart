@@ -4,12 +4,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:tabbed_view/src/content_area.dart';
 import 'package:tabbed_view/src/internal/tabbed_view_provider.dart';
-import 'package:tabbed_view/src/tab_button.dart';
-import 'package:tabbed_view/src/tabbed_view_controller.dart';
 import 'package:tabbed_view/src/tabs_area.dart';
 import 'package:tabbed_view/src/typedefs/on_before_drop_accept.dart';
-import 'package:tabbed_view/src/typedefs/on_draggable_build.dart';
-import 'package:tabbed_view/src/typedefs/can_drop.dart';
+import 'package:tabbed_view/tabbed_view.dart';
 
 /// Tabs area buttons builder
 typedef TabsAreaButtonsBuilder = List<TabButton> Function(
@@ -33,21 +30,24 @@ typedef OnTabSelection = Function(int? newTabIndex);
 ///   selected. The default value is [TRUE].
 /// * [closeButtonTooltip]: optional tooltip for the close button.
 class TabbedView extends StatefulWidget {
-  const TabbedView(
-      {super.key,
-      required this.controller,
-      this.contentBuilder,
-      this.onTabClose,
-      this.onTabSelection,
-      this.tabSelectInterceptor,
-      this.selectToEnableButtons = true,
-      this.contentClip = true,
-      this.closeButtonTooltip,
-      this.tabsAreaButtonsBuilder,
-      this.tabsAreaVisible,
-      this.onDraggableBuild,
-      this.canDrop,
-      this.onBeforeDropAccept});
+  const TabbedView({
+    super.key,
+    required this.controller,
+    this.contentBuilder,
+    this.onTabClose,
+    this.onTabSelection,
+    this.tabSelectInterceptor,
+    this.selectToEnableButtons = true,
+    this.contentClip = true,
+    this.closeButtonTooltip,
+    this.tabsAreaButtonsBuilder,
+    this.tabsAreaVisible,
+    this.onDraggableBuild,
+    this.canDrop,
+    this.onBeforeDropAccept,
+    this.buildTabBar,
+    this.buildTabItem,
+  });
 
   final TabbedViewController controller;
   final bool contentClip;
@@ -62,6 +62,12 @@ class TabbedView extends StatefulWidget {
   final OnDraggableBuild? onDraggableBuild;
   final CanDrop? canDrop;
   final OnBeforeDropAccept? onBeforeDropAccept;
+  final Widget Function(Widget)? buildTabBar;
+  final Widget Function(
+    int index,
+    Widget item,
+    TabStatus status,
+  )? buildTabItem;
 
   @override
   State<StatefulWidget> createState() => _TabbedViewState();
@@ -110,12 +116,20 @@ class _TabbedViewState extends State<TabbedView> {
     return CustomMultiChildLayout(
       delegate: _TabbedViewLayout(),
       children: [
-        LayoutId(id: 1, child: TabsArea(provider: provider)),
         LayoutId(
-            id: 2,
-            child: ContentArea(
-              provider: provider,
-            ))
+          id: 1,
+          child: TabsArea(
+            provider: provider,
+            buildTabBar: widget.buildTabBar,
+            buildTabItem: widget.buildTabItem,
+          ),
+        ),
+        LayoutId(
+          id: 2,
+          child: ContentArea(
+            provider: provider,
+          ),
+        )
       ],
     );
   }
@@ -156,10 +170,11 @@ class _TabbedViewLayout extends MultiChildLayoutDelegate {
       childSize = layoutChild(
           1,
           BoxConstraints(
-              minWidth: size.width,
-              maxWidth: size.width,
-              minHeight: 0,
-              maxHeight: size.height));
+            minWidth: size.width,
+            maxWidth: size.width,
+            minHeight: 0,
+            maxHeight: size.height,
+          ));
       positionChild(1, Offset.zero);
     }
     double height = math.max(0, size.height - childSize.height);

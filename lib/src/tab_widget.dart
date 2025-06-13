@@ -19,14 +19,14 @@ typedef UpdateHighlightedIndex = void Function(int? tabIndex);
 
 /// The tab widget. Displays the tab text and its buttons.
 class TabWidget extends StatelessWidget {
-  const TabWidget(
-      {required UniqueKey key,
-      required this.index,
-      required this.status,
-      required this.provider,
-      required this.updateHighlightedIndex,
-      required this.onClose})
-      : super(key: key);
+  const TabWidget({
+    required UniqueKey key,
+    required this.index,
+    required this.status,
+    required this.provider,
+    required this.updateHighlightedIndex,
+    required this.onClose,
+  }) : super(key: key);
 
   final int index;
   final TabStatus status;
@@ -39,44 +39,16 @@ class TabWidget extends StatelessWidget {
     TabData tab = provider.controller.tabs[index];
     TabbedViewThemeData theme = TabbedViewTheme.of(context);
     TabThemeData tabTheme = theme.tab;
-    TabStatusThemeData statusTheme = tabTheme.getTabThemeFor(status);
 
     List<Widget> textAndButtons = _textAndButtons(context, tabTheme);
 
-    Widget textAndButtonsContainer = ClipRect(
-        child: FlowLayout(
-            firstChildFlex: true,
-            verticalAlignment: tabTheme.verticalAlignment,
-            children: textAndButtons));
-
-    BorderSide innerBottomBorder = statusTheme.innerBottomBorder ??
-        tabTheme.innerBottomBorder ??
-        BorderSide.none;
-    BorderSide innerTopBorder = statusTheme.innerTopBorder ??
-        tabTheme.innerTopBorder ??
-        BorderSide.none;
-    BoxDecoration? decoration = statusTheme.decoration ?? tabTheme.decoration;
-
-    EdgeInsetsGeometry? padding;
-    if (textAndButtons.length == 1) {
-      padding =
-          statusTheme.paddingWithoutButton ?? tabTheme.paddingWithoutButton;
-    }
-    padding ??= statusTheme.padding ?? tabTheme.padding;
-
-    EdgeInsetsGeometry? margin = tabTheme.margin;
-    if (statusTheme.margin != null) {
-      margin = statusTheme.margin;
-    }
-
-    Widget tabWidget = Container(
-        decoration: decoration,
-        margin: margin,
-        child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-                border: Border(top: innerTopBorder, bottom: innerBottomBorder)),
-            child: textAndButtonsContainer));
+    Widget tabWidget = ClipRect(
+      child: FlowLayout(
+        firstChildFlex: true,
+        verticalAlignment: tabTheme.verticalAlignment,
+        children: textAndButtons,
+      ),
+    );
 
     MouseCursor cursor = MouseCursor.defer;
     if (provider.draggingTabIndex == null && status == TabStatus.selected) {
@@ -89,7 +61,10 @@ class TabWidget extends StatelessWidget {
         onExit: (event) => updateHighlightedIndex(null),
         child: provider.draggingTabIndex == null
             ? GestureDetector(
-                onTap: () => _onSelect(context, index), child: tabWidget)
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _onSelect(context, index),
+                child: tabWidget,
+              )
             : tabWidget);
 
     if (tab.draggable) {
@@ -150,7 +125,10 @@ class TabWidget extends StatelessWidget {
     if (provider.controller.reorderEnable &&
         provider.draggingTabIndex != tab.index) {
       return DropTabWidget(
-          provider: provider, newIndex: tab.index, child: tabWidget);
+        provider: provider,
+        newIndex: tab.index,
+        child: tabWidget,
+      );
     }
     return tabWidget;
   }

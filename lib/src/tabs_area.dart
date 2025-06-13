@@ -6,15 +6,24 @@ import 'package:tabbed_view/src/tab_status.dart';
 import 'package:tabbed_view/src/tab_widget.dart';
 import 'package:tabbed_view/src/tabbed_view_controller.dart';
 import 'package:tabbed_view/src/tabs_area_layout.dart';
-import 'package:tabbed_view/src/theme/tabbed_view_theme_data.dart';
-import 'package:tabbed_view/src/theme/tabs_area_theme_data.dart';
 import 'package:tabbed_view/src/theme/theme_widget.dart';
 
 /// Widget for the tabs and buttons.
 class TabsArea extends StatefulWidget {
-  const TabsArea({super.key, required this.provider});
+  const TabsArea({
+    super.key,
+    required this.provider,
+    required this.buildTabBar,
+    required this.buildTabItem,
+  });
 
   final TabbedViewProvider provider;
+  final Widget Function(Widget)? buildTabBar;
+  final Widget Function(
+    int index,
+    Widget item,
+    TabStatus status,
+  )? buildTabItem;
 
   @override
   State<StatefulWidget> createState() => _TabsAreaState();
@@ -29,36 +38,37 @@ class _TabsAreaState extends State<TabsArea> {
   @override
   Widget build(BuildContext context) {
     TabbedViewController controller = widget.provider.controller;
-    TabbedViewThemeData theme = TabbedViewTheme.of(context);
-    TabsAreaThemeData tabsAreaTheme = theme.tabsArea;
     List<Widget> children = [];
     for (int index = 0; index < controller.tabs.length; index++) {
       TabStatus status = _getStatusFor(index);
-      children.add(TabWidget(
-          key: controller.tabs[index].uniqueKey,
-          index: index,
-          status: status,
-          provider: widget.provider,
-          updateHighlightedIndex: _updateHighlightedIndex,
-          onClose: _onTabClose));
+      final item = TabWidget(
+        key: controller.tabs[index].uniqueKey,
+        index: index,
+        status: status,
+        provider: widget.provider,
+        updateHighlightedIndex: _updateHighlightedIndex,
+        onClose: _onTabClose,
+      );
+      children.add(widget.buildTabItem?.call(
+            index,
+            item,
+            status,
+          ) ??
+          item);
     }
 
-    children.add(
-        TabsAreaCorner(provider: widget.provider, hiddenTabs: _hiddenTabs));
+    children.add(TabsAreaCorner(
+      provider: widget.provider,
+      hiddenTabs: _hiddenTabs,
+    ));
 
-    Widget tabsAreaLayout = TabsAreaLayout(
-        theme: theme,
-        hiddenTabs: _hiddenTabs,
-        selectedTabIndex: controller.selectedIndex,
-        children: children);
-    tabsAreaLayout = ClipRect(child: tabsAreaLayout);
-
-    Decoration? decoration;
-    if (tabsAreaTheme.color != null || tabsAreaTheme.border != null) {
-      decoration = BoxDecoration(
-          color: tabsAreaTheme.color, border: tabsAreaTheme.border);
-    }
-    return Container(decoration: decoration, child: tabsAreaLayout);
+    final reWidget = TabsAreaLayout(
+      theme: TabbedViewTheme.of(context),
+      hiddenTabs: _hiddenTabs,
+      selectedTabIndex: controller.selectedIndex,
+      children: children,
+    );
+    return widget.buildTabBar?.call(reWidget) ?? reWidget;
   }
 
   /// Gets the status of the tab for a given index.
