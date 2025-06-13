@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tabbed_view/src/draggable_config.dart';
 import 'package:tabbed_view/src/draggable_data.dart';
-import 'package:tabbed_view/src/flow_layout.dart';
 import 'package:tabbed_view/src/internal/tabbed_view_provider.dart';
 import 'package:tabbed_view/src/internal/tabs_area/drop_tab_widget.dart';
 import 'package:tabbed_view/src/internal/tabs_area/tab_drag_feedback_widget.dart';
@@ -40,14 +39,15 @@ class TabWidget extends StatelessWidget {
     TabbedViewThemeData theme = TabbedViewTheme.of(context);
     TabThemeData tabTheme = theme.tab;
 
-    List<Widget> textAndButtons = _textAndButtons(context, tabTheme);
+    final (leading, textWidget, actions) = _textAndButtons(context, tabTheme);
 
-    Widget tabWidget = ClipRect(
-      child: FlowLayout(
-        firstChildFlex: true,
-        verticalAlignment: tabTheme.verticalAlignment,
-        children: textAndButtons,
-      ),
+    Widget tabWidget = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (null != leading) leading,
+        Expanded(child: textWidget),
+        ...actions,
+      ],
     );
 
     MouseCursor cursor = MouseCursor.defer;
@@ -134,8 +134,10 @@ class TabWidget extends StatelessWidget {
   }
 
   /// Builds a list with title text and buttons.
-  List<Widget> _textAndButtons(BuildContext context, TabThemeData tabTheme) {
-    List<Widget> textAndButtons = [];
+  (Widget?, Widget, List<Widget>) _textAndButtons(
+      BuildContext context, TabThemeData tabTheme) {
+    Widget? leading;
+    List<Widget> buttons = [];
 
     TabData tab = provider.controller.tabs[index];
     TabStatusThemeData statusTheme = tabTheme.getTabThemeFor(status);
@@ -170,77 +172,58 @@ class TabWidget extends StatelessWidget {
         (provider.selectToEnableButtons == false ||
             (provider.selectToEnableButtons && status == TabStatus.selected));
     bool hasButtons = tab.buttons != null && tab.buttons!.isNotEmpty;
-    EdgeInsets? padding;
-    if (tab.closable || hasButtons && tabTheme.buttonsOffset > 0) {
-      padding = EdgeInsets.only(right: tabTheme.buttonsOffset);
-    }
 
     if (tab.leading != null) {
-      Widget? leading = tab.leading!(context, status);
-      if (leading != null) {
-        textAndButtons.add(leading);
-      }
+      leading = tab.leading!(context, status);
     }
 
-    textAndButtons.add(Container(
-        padding: padding,
-        child: SizedBox(
-            width: tab.textSize,
-            child: Text(tab.text,
-                style: textStyle, overflow: TextOverflow.ellipsis))));
+    final textWidget = Text(
+      tab.text,
+      style: textStyle,
+      overflow: TextOverflow.ellipsis,
+    );
 
     if (hasButtons) {
       for (int i = 0; i < tab.buttons!.length; i++) {
-        EdgeInsets? padding;
-        if (i > 0 && i < tab.buttons!.length && tabTheme.buttonsGap > 0) {
-          padding = EdgeInsets.only(left: tabTheme.buttonsGap);
-        }
         TabButton button = tab.buttons![i];
-        textAndButtons.add(Container(
-            padding: padding,
-            child: TabButtonWidget(
-                provider: provider,
-                button: button,
-                enabled: buttonsEnabled,
-                normalColor: normalColor,
-                hoverColor: hoverColor,
-                disabledColor: disabledColor,
-                normalBackground: normalBackground,
-                hoverBackground: hoverBackground,
-                disabledBackground: disabledBackground,
-                iconSize: button.iconSize != null
-                    ? button.iconSize!
-                    : tabTheme.buttonIconSize,
-                themePadding: tabTheme.buttonPadding)));
+        buttons.add(TabButtonWidget(
+          provider: provider,
+          button: button,
+          enabled: buttonsEnabled,
+          normalColor: normalColor,
+          hoverColor: hoverColor,
+          disabledColor: disabledColor,
+          normalBackground: normalBackground,
+          hoverBackground: hoverBackground,
+          disabledBackground: disabledBackground,
+          iconSize: button.iconSize ?? tabTheme.buttonIconSize,
+          themePadding: tabTheme.buttonPadding,
+        ));
       }
     }
     if (tab.closable) {
-      EdgeInsets? padding;
-      if (hasButtons && tabTheme.buttonsGap > 0) {
-        padding = EdgeInsets.only(left: tabTheme.buttonsGap);
-      }
       TabButton closeButton = TabButton(
-          icon: tabTheme.closeIcon,
-          onPressed: () async => await _onClose(context, index),
-          toolTip: provider.closeButtonTooltip);
+        icon: tabTheme.closeIcon,
+        onPressed: () async => await _onClose(context, index),
+        toolTip: provider.closeButtonTooltip,
+      );
 
-      textAndButtons.add(Container(
-          padding: padding,
-          child: TabButtonWidget(
-              provider: provider,
-              button: closeButton,
-              enabled: buttonsEnabled,
-              normalColor: normalColor,
-              hoverColor: hoverColor,
-              disabledColor: disabledColor,
-              normalBackground: normalBackground,
-              hoverBackground: hoverBackground,
-              disabledBackground: disabledBackground,
-              iconSize: tabTheme.buttonIconSize,
-              themePadding: tabTheme.buttonPadding)));
+      buttons.add(TabButtonWidget(
+        provider: provider,
+        button: closeButton,
+        enabled: buttonsEnabled,
+        normalColor: normalColor,
+        hoverColor: hoverColor,
+        disabledColor: disabledColor,
+        normalBackground: normalBackground,
+        hoverBackground: hoverBackground,
+        disabledBackground: disabledBackground,
+        iconSize: tabTheme.buttonIconSize,
+        themePadding: tabTheme.buttonPadding,
+      ));
     }
 
-    return textAndButtons;
+    return (leading, textWidget, buttons);
   }
 
   Future<void> _onClose(BuildContext context, int index) async {
