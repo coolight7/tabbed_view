@@ -4,8 +4,6 @@ import 'package:tabbed_view/src/internal/tabs_area/hidden_tabs.dart';
 import 'package:tabbed_view/src/internal/tabbed_view_provider.dart';
 import 'package:tabbed_view/src/tab_button.dart';
 import 'package:tabbed_view/src/tab_button_widget.dart';
-import 'package:tabbed_view/src/tab_data.dart';
-import 'package:tabbed_view/src/tabbed_view_menu_item.dart';
 import 'package:tabbed_view/src/theme/tabbed_view_theme_data.dart';
 import 'package:tabbed_view/src/theme/tabs_area_theme_data.dart';
 import 'package:tabbed_view/src/theme/theme_widget.dart';
@@ -29,13 +27,6 @@ class TabsAreaButtonsWidget extends StatelessWidget {
       buttons = provider.tabsAreaButtonsBuilder!(
           context, provider.controller.tabs.length);
     }
-    if (hiddenTabs.hasHiddenTabs) {
-      buttons.insert(
-          0,
-          TabButton(
-              icon: tabsAreaTheme.menuIcon,
-              menuBuilder: _hiddenTabsMenuBuilder));
-    }
 
     List<Widget> children = [];
 
@@ -46,6 +37,7 @@ class TabsAreaButtonsWidget extends StatelessWidget {
       }
       final TabButton tabButton = buttons[i];
       children.add(Container(
+          padding: padding,
           child: TabButtonWidget(
               provider: provider,
               button: tabButton,
@@ -59,8 +51,7 @@ class TabsAreaButtonsWidget extends StatelessWidget {
               iconSize: tabButton.iconSize != null
                   ? tabButton.iconSize!
                   : tabsAreaTheme.buttonIconSize,
-              themePadding: tabsAreaTheme.buttonPadding),
-          padding: padding));
+              themePadding: tabsAreaTheme.buttonPadding)));
     }
 
     Widget buttonsArea = Row(children: children);
@@ -75,23 +66,11 @@ class TabsAreaButtonsWidget extends StatelessWidget {
             tabsAreaTheme.buttonsAreaPadding != null ||
             margin != null)) {
       buttonsArea = Container(
-          child: buttonsArea,
           decoration: tabsAreaTheme.buttonsAreaDecoration,
           padding: tabsAreaTheme.buttonsAreaPadding,
-          margin: margin);
+          margin: margin,
+          child: buttonsArea);
     }
     return buttonsArea;
-  }
-
-  /// Builder for hidden tabs menu.
-  List<TabbedViewMenuItem> _hiddenTabsMenuBuilder(BuildContext context) {
-    List<TabbedViewMenuItem> list = [];
-    for (int index in hiddenTabs.indexes) {
-      TabData tab = provider.controller.tabs[index];
-      list.add(TabbedViewMenuItem(
-          text: tab.text,
-          onSelection: () => provider.controller.selectedIndex = index));
-    }
-    return list;
   }
 }

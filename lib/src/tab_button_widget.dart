@@ -2,12 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:tabbed_view/src/internal/tabbed_view_provider.dart';
 import 'package:tabbed_view/src/tab_button.dart';
-import 'package:tabbed_view/src/tabbed_view_menu_item.dart';
 
 /// Widget for tab buttons. Used for any tab button such as the close button.
 class TabButtonWidget extends StatefulWidget {
-  TabButtonWidget(
-      {required this.provider,
+  const TabButtonWidget(
+      {super.key,
+      required this.provider,
       required this.button,
       required this.enabled,
       required this.iconSize,
@@ -44,39 +44,31 @@ class TabButtonWidgetState extends State<TabButtonWidget> {
     Color color;
     BoxDecoration? background;
 
-    bool hasEvent =
-        widget.button.onPressed != null || widget.button.menuBuilder != null;
+    bool hasEvent = widget.button.onPressed != null;
     bool isDisabled = hasEvent == false || widget.enabled == false;
     if (isDisabled) {
       color = widget.button.disabledColor != null
           ? widget.button.disabledColor!
           : widget.disabledColor;
-      background = widget.button.disabledBackground != null
-          ? widget.button.disabledBackground
-          : widget.disabledBackground;
+      background =
+          widget.button.disabledBackground ?? widget.disabledBackground;
     } else if (_hover) {
       color = widget.button.hoverColor != null
           ? widget.button.hoverColor!
           : widget.hoverColor;
-      background = widget.button.hoverBackground != null
-          ? widget.button.hoverBackground
-          : widget.hoverBackground;
+      background = widget.button.hoverBackground ?? widget.hoverBackground;
     } else {
       color = widget.button.color != null
           ? widget.button.color!
           : widget.normalColor;
-      background = widget.button.background != null
-          ? widget.button.background
-          : widget.normalBackground;
+      background = widget.button.background ?? widget.normalBackground;
     }
 
     Widget icon = widget.button.icon.buildIcon(color, widget.iconSize);
 
-    EdgeInsetsGeometry? padding = widget.button.padding != null
-        ? widget.button.padding
-        : widget.themePadding;
+    EdgeInsetsGeometry? padding = widget.button.padding ?? widget.themePadding;
     if (padding != null || background != null) {
-      icon = Container(child: icon, padding: padding, decoration: background);
+      icon = Container(padding: padding, decoration: background, child: icon);
     }
 
     if (isDisabled) {
@@ -84,32 +76,19 @@ class TabButtonWidgetState extends State<TabButtonWidget> {
     }
 
     VoidCallback? onPressed = widget.button.onPressed;
-    if (widget.button.menuBuilder != null) {
-      onPressed = () {
-        if (widget.provider.menuItems.isEmpty) {
-          List<TabbedViewMenuItem> menuItems =
-              widget.button.menuBuilder!(context);
-          if (menuItems.isNotEmpty) {
-            widget.provider.menuItemsUpdater(menuItems);
-          }
-        } else {
-          widget.provider.menuItemsUpdater([]);
-        }
-      };
-    }
 
     if (widget.button.toolTip != null) {
       icon = Tooltip(
           message: widget.button.toolTip!,
-          child: icon,
-          waitDuration: Duration(milliseconds: 500));
+          waitDuration: Duration(milliseconds: 500),
+          child: icon);
     }
 
     return MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: _onEnter,
         onExit: _onExit,
-        child: GestureDetector(child: icon, onTap: onPressed));
+        child: GestureDetector(onTap: onPressed, child: icon));
   }
 
   void _onEnter(PointerEnterEvent event) {
