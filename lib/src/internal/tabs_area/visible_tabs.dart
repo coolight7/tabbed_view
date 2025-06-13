@@ -11,7 +11,7 @@ class VisibleTabs {
 
   final TabsAreaThemeData tabsAreaTheme;
 
-  List<RenderBox> _tabs = [];
+  final List<RenderBox> _tabs = [];
 
   void add(RenderBox tab) {
     _tabs.add(tab);

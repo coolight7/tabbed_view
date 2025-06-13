@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:tabbed_view/src/content_area.dart';
 import 'package:tabbed_view/src/internal/tabbed_view_provider.dart';
 import 'package:tabbed_view/src/tab_button.dart';
-import 'package:tabbed_view/src/tab_data.dart';
 import 'package:tabbed_view/src/tabbed_view_controller.dart';
 import 'package:tabbed_view/src/tabs_area.dart';
 import 'package:tabbed_view/src/typedefs/on_before_drop_accept.dart';
@@ -17,10 +16,7 @@ typedef TabsAreaButtonsBuilder = List<TabButton> Function(
     BuildContext context, int tabsCount);
 
 /// The event that will be triggered after the tab close.
-typedef OnTabClose = void Function(int tabIndex, TabData tabData);
-
-/// Intercepts a close event to indicates whether the tab can be closed.
-typedef TabCloseInterceptor = FutureOr<bool> Function(int tabIndex);
+typedef OnTabClose = Future<bool> Function(int tabIndex);
 
 /// Intercepts a select event to indicate whether the tab can be selected.
 typedef TabSelectInterceptor = bool Function(int newTabIndex);
@@ -42,7 +38,6 @@ class TabbedView extends StatefulWidget {
       required this.controller,
       this.contentBuilder,
       this.onTabClose,
-      this.tabCloseInterceptor,
       this.onTabSelection,
       this.tabSelectInterceptor,
       this.selectToEnableButtons = true,
@@ -58,7 +53,6 @@ class TabbedView extends StatefulWidget {
   final bool contentClip;
   final IndexedWidgetBuilder? contentBuilder;
   final OnTabClose? onTabClose;
-  final TabCloseInterceptor? tabCloseInterceptor;
   final OnTabSelection? onTabSelection;
   final TabSelectInterceptor? tabSelectInterceptor;
   final bool selectToEnableButtons;
@@ -98,34 +92,32 @@ class _TabbedViewState extends State<TabbedView> {
   @override
   Widget build(BuildContext context) {
     TabbedViewProvider provider = TabbedViewProvider(
-        controller: widget.controller,
-        contentBuilder: widget.contentBuilder,
-        onTabClose: widget.onTabClose,
-        tabCloseInterceptor: widget.tabCloseInterceptor,
-        onTabSelection: widget.onTabSelection,
-        contentClip: widget.contentClip,
-        tabSelectInterceptor: widget.tabSelectInterceptor,
-        selectToEnableButtons: widget.selectToEnableButtons,
-        closeButtonTooltip: widget.closeButtonTooltip,
-        tabsAreaButtonsBuilder: widget.tabsAreaButtonsBuilder,
-        onDraggableBuild: widget.onDraggableBuild,
-        onTabDrag: _onTabDrag,
-        draggingTabIndex: _draggingTabIndex,
-        canDrop: widget.canDrop,
-        onBeforeDropAccept: widget.onBeforeDropAccept);
-
-    final bool tabsAreaVisible = widget.tabsAreaVisible ?? true;
-    List<LayoutId> children = [];
-    if (tabsAreaVisible) {
-      Widget tabArea = TabsArea(provider: provider);
-      children.add(LayoutId(id: 1, child: tabArea));
-    }
-    ContentArea contentArea = ContentArea(
-      provider: provider,
+      controller: widget.controller,
+      contentBuilder: widget.contentBuilder,
+      onTabClose: widget.onTabClose,
+      onTabSelection: widget.onTabSelection,
+      contentClip: widget.contentClip,
+      tabSelectInterceptor: widget.tabSelectInterceptor,
+      selectToEnableButtons: widget.selectToEnableButtons,
+      closeButtonTooltip: widget.closeButtonTooltip,
+      tabsAreaButtonsBuilder: widget.tabsAreaButtonsBuilder,
+      onDraggableBuild: widget.onDraggableBuild,
+      onTabDrag: _onTabDrag,
+      draggingTabIndex: _draggingTabIndex,
+      canDrop: widget.canDrop,
+      onBeforeDropAccept: widget.onBeforeDropAccept,
     );
-    children.add(LayoutId(id: 2, child: contentArea));
     return CustomMultiChildLayout(
-        delegate: _TabbedViewLayout(), children: children);
+      delegate: _TabbedViewLayout(),
+      children: [
+        LayoutId(id: 1, child: TabsArea(provider: provider)),
+        LayoutId(
+            id: 2,
+            child: ContentArea(
+              provider: provider,
+            ))
+      ],
+    );
   }
 
   void _onTabDrag(int? tabIndex) {
@@ -145,6 +137,7 @@ class _TabbedViewState extends State<TabbedView> {
         widget.onTabSelection!(newTabIndex);
       }
     }
+    setState(() {});
   }
 
   @override

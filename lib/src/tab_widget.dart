@@ -45,9 +45,9 @@ class TabWidget extends StatelessWidget {
 
     Widget textAndButtonsContainer = ClipRect(
         child: FlowLayout(
-            children: textAndButtons,
             firstChildFlex: true,
-            verticalAlignment: tabTheme.verticalAlignment));
+            verticalAlignment: tabTheme.verticalAlignment,
+            children: textAndButtons));
 
     BorderSide innerBottomBorder = statusTheme.innerBottomBorder ??
         tabTheme.innerBottomBorder ??
@@ -62,9 +62,7 @@ class TabWidget extends StatelessWidget {
       padding =
           statusTheme.paddingWithoutButton ?? tabTheme.paddingWithoutButton;
     }
-    if (padding == null) {
-      padding = statusTheme.padding ?? tabTheme.padding;
-    }
+    padding ??= statusTheme.padding ?? tabTheme.padding;
 
     EdgeInsetsGeometry? margin = tabTheme.margin;
     if (statusTheme.margin != null) {
@@ -72,14 +70,13 @@ class TabWidget extends StatelessWidget {
     }
 
     Widget tabWidget = Container(
+        decoration: decoration,
+        margin: margin,
         child: Container(
-            child: textAndButtonsContainer,
             padding: padding,
             decoration: BoxDecoration(
-                border:
-                    Border(top: innerTopBorder, bottom: innerBottomBorder))),
-        decoration: decoration,
-        margin: margin);
+                border: Border(top: innerTopBorder, bottom: innerBottomBorder)),
+            child: textAndButtonsContainer));
 
     MouseCursor cursor = MouseCursor.defer;
     if (provider.draggingTabIndex == null && status == TabStatus.selected) {
@@ -108,7 +105,6 @@ class TabWidget extends StatelessWidget {
             : TabDragFeedbackWidget(tab: tab, tabTheme: tabTheme);
 
         tabWidget = Draggable<DraggableData>(
-            child: tabWidget,
             feedback: Material(child: feedback),
             data: DraggableData(provider.controller, tab),
             feedbackOffset: draggableConfig.feedbackOffset,
@@ -140,13 +136,14 @@ class TabWidget extends StatelessWidget {
               if (draggableConfig.onDragCompleted != null) {
                 draggableConfig.onDragCompleted!();
               }
-            });
+            },
+            child: tabWidget);
 
         tabWidget = Opacity(
-            child: tabWidget,
             opacity: provider.draggingTabIndex != index
                 ? 1
-                : tabTheme.draggingOpacity);
+                : tabTheme.draggingOpacity,
+            child: tabWidget);
       }
     }
 
@@ -175,16 +172,12 @@ class TabWidget extends StatelessWidget {
         ? statusTheme.disabledButtonColor!
         : tabTheme.disabledButtonColor;
 
-    BoxDecoration? normalBackground = statusTheme.normalButtonBackground != null
-        ? statusTheme.normalButtonBackground
-        : tabTheme.normalButtonBackground;
-    BoxDecoration? hoverBackground = statusTheme.hoverButtonBackground != null
-        ? statusTheme.hoverButtonBackground
-        : tabTheme.hoverButtonBackground;
-    BoxDecoration? disabledBackground =
-        statusTheme.disabledButtonBackground != null
-            ? statusTheme.disabledButtonBackground
-            : tabTheme.disabledButtonBackground;
+    BoxDecoration? normalBackground =
+        statusTheme.normalButtonBackground ?? tabTheme.normalButtonBackground;
+    BoxDecoration? hoverBackground =
+        statusTheme.hoverButtonBackground ?? tabTheme.hoverButtonBackground;
+    BoxDecoration? disabledBackground = statusTheme.disabledButtonBackground ??
+        tabTheme.disabledButtonBackground;
 
     TextStyle? textStyle = tabTheme.textStyle;
     if (statusTheme.fontColor != null) {
@@ -212,11 +205,11 @@ class TabWidget extends StatelessWidget {
     }
 
     textAndButtons.add(Container(
+        padding: padding,
         child: SizedBox(
             width: tab.textSize,
             child: Text(tab.text,
-                style: textStyle, overflow: TextOverflow.ellipsis)),
-        padding: padding));
+                style: textStyle, overflow: TextOverflow.ellipsis))));
 
     if (hasButtons) {
       for (int i = 0; i < tab.buttons!.length; i++) {
@@ -226,6 +219,7 @@ class TabWidget extends StatelessWidget {
         }
         TabButton button = tab.buttons![i];
         textAndButtons.add(Container(
+            padding: padding,
             child: TabButtonWidget(
                 provider: provider,
                 button: button,
@@ -239,8 +233,7 @@ class TabWidget extends StatelessWidget {
                 iconSize: button.iconSize != null
                     ? button.iconSize!
                     : tabTheme.buttonIconSize,
-                themePadding: tabTheme.buttonPadding),
-            padding: padding));
+                themePadding: tabTheme.buttonPadding)));
       }
     }
     if (tab.closable) {
@@ -254,6 +247,7 @@ class TabWidget extends StatelessWidget {
           toolTip: provider.closeButtonTooltip);
 
       textAndButtons.add(Container(
+          padding: padding,
           child: TabButtonWidget(
               provider: provider,
               button: closeButton,
@@ -265,8 +259,7 @@ class TabWidget extends StatelessWidget {
               hoverBackground: hoverBackground,
               disabledBackground: disabledBackground,
               iconSize: tabTheme.buttonIconSize,
-              themePadding: tabTheme.buttonPadding),
-          padding: padding));
+              themePadding: tabTheme.buttonPadding)));
     }
 
     return textAndButtons;
@@ -274,13 +267,11 @@ class TabWidget extends StatelessWidget {
 
   Future<void> _onClose(BuildContext context, int index) async {
     TabData tabData = provider.controller.getTabByIndex(index);
-    if (provider.tabCloseInterceptor == null ||
-        (await provider.tabCloseInterceptor!(index))) {
+    if (provider.onTabClose == null || (await provider.onTabClose!(index))) {
       onClose();
       index = provider.controller.tabs.indexOf(tabData);
-      index != -1 ? provider.controller.removeTab(index) : null;
-      if (provider.onTabClose != null && index != -1) {
-        provider.onTabClose!(index, tabData);
+      if (index != -1) {
+        provider.controller.removeTab(index);
       }
     }
   }

@@ -13,7 +13,6 @@ class TabbedViewProvider {
       {required this.controller,
       this.contentBuilder,
       this.onTabClose,
-      this.tabCloseInterceptor,
       required this.contentClip,
       this.onTabSelection,
       this.tabSelectInterceptor,
@@ -30,7 +29,6 @@ class TabbedViewProvider {
   final bool contentClip;
   final IndexedWidgetBuilder? contentBuilder;
   final OnTabClose? onTabClose;
-  final TabCloseInterceptor? tabCloseInterceptor;
   final OnTabSelection? onTabSelection;
   final TabSelectInterceptor? tabSelectInterceptor;
   final bool selectToEnableButtons;
