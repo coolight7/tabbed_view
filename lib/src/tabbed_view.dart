@@ -47,6 +47,7 @@ class TabbedView extends StatefulWidget {
     this.onBeforeDropAccept,
     this.buildTabBar,
     this.buildTabItem,
+    this.onEmptyBuilder,
   });
 
   final TabbedViewController controller;
@@ -68,6 +69,7 @@ class TabbedView extends StatefulWidget {
     Widget item,
     TabStatus status,
   )? buildTabItem;
+  final Widget Function()? onEmptyBuilder;
 
   @override
   State<StatefulWidget> createState() => _TabbedViewState();
@@ -113,6 +115,9 @@ class _TabbedViewState extends State<TabbedView> {
       canDrop: widget.canDrop,
       onBeforeDropAccept: widget.onBeforeDropAccept,
     );
+    if (widget.controller.tabs.isEmpty && widget.onEmptyBuilder != null) {
+      return widget.onEmptyBuilder!();
+    }
     return CustomMultiChildLayout(
       delegate: _TabbedViewLayout(),
       children: [
