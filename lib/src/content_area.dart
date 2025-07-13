@@ -30,8 +30,13 @@ class ContentArea extends StatelessWidget {
         if (tab.keepAlive) {
           child = Offstage(offstage: !selectedTab, child: child);
         }
+        // TODO: 保持状态
+        child = Visibility(
+          visible: selectedTab,
+          child: child ?? const SizedBox(),
+        );
         children.add(
-          Positioned.fill(key: tab.key, child: child ?? const SizedBox()),
+          Positioned.fill(key: tab.key, child: child),
         );
       }
     }
