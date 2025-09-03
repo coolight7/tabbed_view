@@ -80,7 +80,7 @@ class TabButtonWidgetState extends State<TabButtonWidget> {
     if (widget.button.toolTip != null) {
       icon = Tooltip(
           message: widget.button.toolTip!,
-          waitDuration: Duration(milliseconds: 500),
+          waitDuration: const Duration(milliseconds: 500),
           child: icon);
     }
 

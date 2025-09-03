@@ -201,7 +201,7 @@ class TabWidget extends StatelessWidget {
         ));
       }
     }
-    if (tab.closable) {
+    if (tab.closable && index == provider.controller.selectedIndex) {
       TabButton closeButton = TabButton(
         icon: tabTheme.closeIcon,
         onPressed: () async => await _onClose(context, index),

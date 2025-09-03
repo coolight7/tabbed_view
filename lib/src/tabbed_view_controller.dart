@@ -16,7 +16,7 @@ typedef OnReorder = void Function(int oldIndex, int newIndex);
 class TabbedViewController extends ChangeNotifier {
   TabbedViewController(this._tabs,
       {this.onReorder, this.data, bool reorderEnable = true})
-      : this._reorderEnable = reorderEnable {
+      : _reorderEnable = reorderEnable {
     if (_tabs.isNotEmpty) {
       _selectedIndex = 0;
     }
